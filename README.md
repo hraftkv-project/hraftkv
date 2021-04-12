@@ -133,3 +133,72 @@
 
 ## YCSB Client
 
+* Clone [YCSB](https://github.com/brianfrankcooper/YCSB/) from source
+
+  ```shell
+  $ git clone git://github.com/brianfrankcooper/YCSB.git
+  ```
+
+* Copy the hraftkv-binding of YCSB that we provided to the YCSB source directory
+
+  ```shell
+  $ cp -R hraftkv/ycsb/hraftkv YCSB
+  ```
+
+* Add hraftkv module to pom.xml
+
+  ```xml
+  <modules>
+  	...
+      <module>tablestore</module>
+      <module>voltdb</module>
+      <module>hraftkv</module>
+  </modules>
+  ```
+
+* Build YCSB core and hraftkv-binding
+
+  ```shell
+  $ mvn -f ${YCSB_HOME}/pom.xml -pl site.ycsb:core -am package
+  $ mvn -f YCSB/pom.xml -pl site.ycsb:hraftkv-binding -am package
+  ```
+
+* Define some arguments for executing hraftkv-binding in YCSB
+
+  ```shell
+  # Define classpath and db class name
+  classpath="YCSB/core/target/core-0.18.0-SNAPSHOT.jar:YCSB/hraftkv/target/hraftkv-binding-0.18.0-SNAPSHOT.jar:YCSB/hraftkv/target/dependency/*:YCSB/lib/*"
+  db_class="site.ycsb.db.HRaftKVClient"
+  
+  # Pass the id of group_0 to the client, that is defined in 'server.ini' previously
+  group_id="hraftkv.group_id=KVStore_0"
+  # Pass the conf of group_0 to the client, that is defined in 'server.ini' previously
+  group_conf="hraftkv.group_conf=192.168.10.26:8100:0,192.168.10.27:8100:0,192.168.10.28:8100:0"
+  # If the HRaftKV is run in single Raft mode, set to false,
+  # Else, set to true
+  enable_multi_raft="hraftkv.enable_multi_raft=false"
+  ```
+
+* Execute hraftkv-binding in YCSB (Please setup and start the HRaftKV cluster first)
+
+  ```shell
+  # Load a YCSB workload
+  $ java -cp ${classpath} site.ycsb.Client -load -s -db ${db_class} \
+  	-p ${group_id} \
+  	-p ${group_conf} \
+  	-p ${enable_multi_raft} \
+  	-P <path of workload> # It is Capital 'P' for this line
+  	
+  # Run a YCSB workload
+  $ java -cp ${classpath} site.ycsb.Client -t -s -db ${db_class} \
+  	-p ${group_id} \
+  	-p ${group_conf} \
+  	-p ${enable_multi_raft} \
+  	-P <path of workload> # It is Capital 'P' for this line
+  	
+  # Run a YCSB interactive shell
+  $ java -cp ${classpath} site.ycsb.CommandLine -db ${db_class} \
+  	-p ${group_id} \
+  	-p ${group_conf} \
+  	-p ${enable_multi_raft}
+  ```
