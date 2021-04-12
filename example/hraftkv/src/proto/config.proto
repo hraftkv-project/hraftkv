@@ -1,0 +1,71 @@
+syntax="proto2";
+package hraftkv.config;
+option cc_generic_services = true;
+
+import "metadata.proto";
+
+message Server {
+    // IP address of the server
+    // e.g. "192.168.0.26"
+    required string ip_addr = 1;
+    // Port of the server
+    // e.g. 8100
+    required int32 port = 2;
+    // Index of the server
+    // e.g. 1
+    required int32 index = 3;
+}
+
+message Raft {
+    // ID of the replication group
+    // optional string group = 1 [default = "KVStore"];
+    // // List of raft peers
+    // // e.g. "192.168.0.26:8100:0,192.168.0.27:8100:0,192.168.0.28:8100:0"
+    // required string conf = 2;
+    // Path of data stored on
+    optional string data_path = 3 [default = "./data"];
+    // Start election in such milliseconds if disconnect with the leader
+    optional int32 election_timeout_ms = 4 [default = 5000];
+    // Stepdown timeout
+    optional int32 stepdown_timeout_ms = 5 [default = 5000];
+    // Vote timeout
+    optional int32 vote_timeout_ms = 6 [default = 5000];
+    // Check if the leader changed to another term
+    optional bool check_term = 7 [default = true];
+    // Don't allow raft_cli access this node
+    optional bool disable_cli = 8 [default = false];
+    // Interval between each snapshot
+    optional int32 snapshot_interval = 9 [default = 0];
+}
+
+message HRaft {
+    optional bool enable_ple = 1 [default = true];
+    optional bool enable_pre_vote_ple = 4 [default = true];
+    optional bool enable_leadership_transfer = 5 [default = true];
+    optional bool enable_candidate_level = 6 [default = true];
+    optional bool enable_dynamic_priority = 7 [default = false];
+    optional double append_entries_ewma_weight = 8 [default = 0.2];
+    optional int32 append_entries_ewma_timeout_ms = 9 [default = 1000];
+    optional int64 append_entries_latency_thresh_us = 10 [default = 1000];
+    optional string append_entries_latency_priority_map = 11 [default = "MAX:1,40000:2,20000:3,10000:4,5000:5"];
+    // Multi-Raft Related
+    optional bool multi_raft_enable = 12 [default = false];
+    optional int32 multi_raft_num_groups = 13 [default = 0];
+    repeated RaftGroup multi_raft_groups = 14;
+}
+
+message RsRaft {
+    // Whether to use erasure coding
+    optional bool enable = 10 [default = true];
+}
+
+message Adapter {
+    // Type of adapter to be used
+    // e.g. "redis", "leveldb"
+    required string type = 1;
+}
+
+message RocksDB {
+    // Path of RocksDB directory
+    optional string dir = 1 [default = "./rocksdb"];
+}

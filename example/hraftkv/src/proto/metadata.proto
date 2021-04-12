@@ -1,0 +1,28 @@
+syntax="proto2";
+package hraftkv;
+
+enum MetadataType {
+    META_UNKNOWN = 0;
+    META_SESSION_ID = 1;
+}
+
+message SessionId {
+    required string ip = 1;
+    required int64 lease_time = 2;
+}
+
+message RaftGroup {
+    required string id = 1;
+    optional bytes start_key = 2;
+    optional bytes end_key = 3;
+    required string conf = 4;
+    optional string initial_priority = 5;
+    optional int64 initial_leader_priority = 6;
+    optional string election_timeout_ms = 7;
+}
+
+message GroupTable {
+    required int64 version = 1;
+    required int32 shard_index = 2;
+    repeated RaftGroup groups = 3;
+}

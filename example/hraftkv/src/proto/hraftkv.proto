@@ -1,0 +1,81 @@
+syntax="proto2";
+package hraftkv;
+option cc_generic_services = true;
+
+import "metadata.proto";
+
+/* Metadata request & response */
+message SessionIdRequest {
+    enum OpType {
+        CREATE = 0;
+        RENEW = 1;
+        EXPIRE = 2;
+    }
+    
+    required OpType operation = 1; // operation command
+    optional string uuid = 2; // to renew / expire the uuid
+    optional string ip = 3; // the ip of the requester
+    optional int64 lease_time = 4; // leave for server to use
+    optional string bm_name = 5; // benchmark name, set by YCSB client when benchmark
+    optional int64 group_table_version = 6; // the version of client group table, minus for force update
+}
+
+message SessionIdResponse {
+    optional string uuid = 1;
+    optional int64 lease_time = 2; // timestamp that the lease_time expire
+    optional GroupTable group_table = 3; // give client the new table
+}
+
+message MetadataResponse {
+    required MetadataType type = 1; // MetadataType in metadata.proto
+    required bool success = 2;
+    optional string redirect = 3;
+    optional SessionIdResponse session_id = 4;
+}
+
+/* Key-value request & response */
+message Snapshot {
+    required int64 value = 1;
+};
+
+message GetRequest {
+    required string key = 1;
+    optional int32 unit_id = 3;
+    required string session_id = 4;
+    optional string group_id = 5;
+};
+
+message PutRequest {
+    required string key = 1;
+    required bytes value = 2;
+    optional int32 unit_id = 3;
+    required string session_id = 4;
+    optional string group_id = 5;
+};
+
+message DeleteRequest {
+    required string key = 1;
+    optional int32 unit_id = 3;
+    required string session_id = 4;
+    optional string group_id = 5;
+}
+
+message Response {
+    required bool success = 1;
+    optional string redirect = 2;
+    optional bytes value = 3;
+};
+
+message PrintBmRequest {
+    required string uuid = 1;
+    required int32 func_id = 2;
+    optional string group_id = 3;
+}
+
+service Service {
+    rpc session_id(SessionIdRequest) returns (MetadataResponse);
+    rpc get(GetRequest) returns (Response);
+    rpc put(PutRequest) returns (Response);
+    rpc del(DeleteRequest) returns (Response);
+    rpc print_bm(PrintBmRequest) returns (Response);
+};

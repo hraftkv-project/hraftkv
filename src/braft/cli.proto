@@ -1,0 +1,178 @@
+syntax="proto2";
+package braft;
+
+option cc_generic_services = true;
+
+message AddPeerRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+    required string peer_id = 3;
+}
+
+message AddPeerResponse {
+    repeated string old_peers = 1;
+    repeated string new_peers = 2;
+}
+
+message RemovePeerRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+    required string peer_id = 3;
+}
+
+message RemovePeerResponse {
+    repeated string old_peers = 1;
+    repeated string new_peers = 2;
+}
+
+message ChangePeersRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+    repeated string new_peers = 3;
+}
+
+message ChangePeersResponse {
+    repeated string old_peers = 1;
+    repeated string new_peers = 2;
+}
+
+message SnapshotRequest {
+    required string group_id = 1;
+    optional string peer_id = 2;
+};
+
+message ResetPeerRequest {
+    required string group_id = 1;
+    required string peer_id = 2;
+    repeated string old_peers = 3;
+    repeated string new_peers = 4;
+}
+
+message TransferLeaderRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+    optional string peer_id = 3;
+}
+
+message TransferLeaderResponse {}
+
+message ResetPeerResponse {
+}
+
+// We make all fields in SnapshotResponse optional
+// Because they are from benchmark framework, which can be disabled
+message SnapshotResponse {
+    optional bool ready = 1;
+    optional uint64 size = 2;
+    optional int64 last_included_term = 3;
+    optional int64 last_included_index = 4;
+    optional double overall_ms = 5;
+    optional double compaction_ms = 6;
+}
+
+message GetLeaderRequest {
+    required string group_id = 1;
+    optional string peer_id = 2;
+}
+
+message GetLeaderResponse {
+    required string leader_id = 1;
+}
+
+message BmElectionStartRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+}
+
+message BmElectionStartResponse {
+    required int64 term = 1;
+}
+
+message BmElectionEndRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+}
+
+message BmElectionEndResponse {
+    required int64 term = 1;
+    required int64 leader_priority = 2;
+    required int64 timestamp = 3;
+    optional string leader_id = 4;
+}
+
+message BmRecoveryStartRequest {
+    required string mode = 1; // InstallSnapshot,RecoverEntries
+    optional string peer_id = 2; // the peer that need recovery
+}
+
+message BmRecoveryStartResponse {
+    required bool success = 1;
+}
+
+message BmRecoveryEndRequest {
+    required string mode = 1; // InstallSnapshot,RecoverEntries
+    optional string peer_id = 2; // the peer that need recovery
+}
+
+message BmRecoveryEndResponse {
+    required bool ready = 1; // is the result has been inserted to benchmark framework
+    optional uint64 size = 2;
+    optional double time_ms = 3;
+    optional double time_s = 4;
+}
+
+message BmLeaderTransferStartRequest {
+    required string peer_id = 1;
+}
+
+message BmLeaderTransferStartResponse {
+    required bool ready = 1;
+    optional int64 detect_target = 2;
+    optional int64 transfer_start = 3;
+    optional int64 transfer_end = 4;
+    optional int64 transfer_time = 5;
+}
+
+message PeerPriority {
+    required string peer_id = 1;
+    required int64 priority = 2;
+}
+
+message GetAllPriorityRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+}
+
+message GetAllPriorityResponse {
+    repeated PeerPriority peer_priority = 1;
+}
+
+message GetLeaderLatencyRequest {
+    required string group_id = 1;
+    required string leader_id = 2;
+}
+
+message GetLeaderLatencyResponse {
+    required int64 average = 1;
+    required int64 ewma = 2;
+}
+
+// service
+service CliService {
+    rpc add_peer(AddPeerRequest) returns (AddPeerResponse);
+    rpc remove_peer(RemovePeerRequest) returns (RemovePeerResponse);
+    rpc change_peers(ChangePeersRequest) returns (ChangePeersResponse);
+    rpc reset_peer(ResetPeerRequest) returns (ResetPeerResponse);
+    rpc snapshot(SnapshotRequest) returns (SnapshotResponse);
+    rpc get_leader(GetLeaderRequest) returns (GetLeaderResponse);
+    rpc transfer_leader(TransferLeaderRequest) returns (TransferLeaderResponse);
+    
+    rpc get_all_priority(GetAllPriorityRequest) returns (GetAllPriorityResponse);
+    rpc get_leader_latency(GetLeaderLatencyRequest) returns (GetLeaderLatencyResponse);
+    // benchmark
+    rpc bm_election_start(BmElectionStartRequest) returns (BmElectionStartResponse);
+    rpc bm_election_end(BmElectionEndRequest) returns (BmElectionEndResponse);
+    rpc bm_recovery_start(BmRecoveryStartRequest) returns (BmRecoveryStartResponse);
+    rpc bm_recovery_end(BmRecoveryEndRequest) returns (BmRecoveryEndResponse);
+    rpc bm_leader_transfer_start(BmLeaderTransferStartRequest) returns (BmLeaderTransferStartResponse);
+};
